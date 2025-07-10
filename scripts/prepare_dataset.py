@@ -86,13 +86,13 @@ if __name__ == "__main__":
     
     # split train test sets:
     logger.info("Splitting filtered dataset into train, test sets")
-    train_df, test_df = train_test_split(
+    train_df, val_df = train_test_split(
         df, 
         test_size=0.2,
         random_state=111,
     )
 
-    logger.info(f"training dataset size: {len(train_df)}, test dataset size: {len(test_df)}")
+    logger.info(f"training dataset size: {len(train_df)}, test dataset size: {len(val_df)}")
 
     # write DFs to disk
     logger.info("Persisting train, test sets")
@@ -100,5 +100,5 @@ if __name__ == "__main__":
     os.makedirs("data/cleaned/", exist_ok=True)
 
     train_df.to_parquet("data/cleaned/train_dataset.parquet")
-    test_df.to_parquet("data/cleaned/train_dataset.parquet")
+    val_df.to_parquet("data/cleaned/validation_dataset.parquet")
     
