@@ -1,4 +1,7 @@
+import json
 import os
+import re
+import unicodedata
 from typing import Optional
 
 import pandas as pd
@@ -63,7 +66,21 @@ def filter_valid_data(df: pd.DataFrame, limit: Optional[int] = None, max_answer_
         return filtered_df.sample(limit)
     return filtered_df
 
+def clean_text(txt: str) -> str:
+    txt = unicodedata.normalize("NFKC", txt)
+    txt = re.sub(r"\s+", " ", txt).strip()
+    return txt
 
+def format_df(df: pd.DataFrame) -> list:
+    pairs = [
+        {
+        "instruction": clean_text(q),
+        "input": "",
+        "output":   clean_text(a)
+        } for q,a in zip(df.question, df.answer)
+        if 5 <= len(clean_text(q).split()) <= 512
+    ]
+    return pairs
 
 
 if __name__ == "__main__":
@@ -99,6 +116,21 @@ if __name__ == "__main__":
     # create directory if not exists
     os.makedirs("data/cleaned/", exist_ok=True)
 
+    # format data
+    train_pairs = format_df(train_df)
+    with open(f"data/cleaned/train.jsonl","w") as f:
+        for row in train_pairs:
+            json.dump(row, f)
+            f.write("\n")
+
+    val_pairs = format_df(val_df)
+    with open(f"data/cleaned/val.jsonl","w") as f:
+        for row in val_pairs:
+            json.dump(row, f)
+            f.write("\n")
+
     train_df.to_parquet("data/cleaned/train_dataset.parquet")
     val_df.to_parquet("data/cleaned/validation_dataset.parquet")
+    
+    
     
