@@ -11,6 +11,7 @@ EMB_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 OUTPUT_DIR = "medquad_faiss"
 NUM_EXAMPLES = 5000
 
+
 def get_dataset(num_samples: int) -> list[dict]:
     """Funtion to download the medquad open dataset. This will be used to create our Vector DB for the RAG app
 
@@ -31,6 +32,7 @@ def get_dataset(num_samples: int) -> list[dict]:
         }
     return [to_doc(item) for item in ds]
 
+
 def split_documents(docs: list[dict], chunk_size: int = 512, chunk_overlap: int = 64) -> list[dict]:
     """
     Args:
@@ -41,10 +43,11 @@ def split_documents(docs: list[dict], chunk_size: int = 512, chunk_overlap: int 
     Returns:
         list[dict]: a list of chunked Documents
     """
-    splitter  = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     contents = [d["page_content"] for d in docs]
     metadatas = [d["metadata"] for d in docs]
     return splitter.create_documents(contents, metadatas=metadatas)
+
 
 def create_vector_DB(chunks: list[dict], embd_name: str, output_dir: str) -> None:
     """Function to create vector DB with specified doc chunks
@@ -54,9 +57,10 @@ def create_vector_DB(chunks: list[dict], embd_name: str, output_dir: str) -> Non
         embd_name (str): the embedding model to use (name from HuggingFaceEmbeddings)
         output_dir (str): location where the local vector DB will be saved
     """
-    embedder  = HuggingFaceEmbeddings(model_name=embd_name)
+    embedder = HuggingFaceEmbeddings(model_name=embd_name)
     vector_db = FAISS.from_documents(chunks, embedder)
     vector_db.save_local(output_dir)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="create a local FAISS vector DB")
@@ -64,6 +68,7 @@ def parse_args():
     parser.add_argument("--output_dir", type=str, default=OUTPUT_DIR)
     parser.add_argument("--num_examples", type=int, default=NUM_EXAMPLES)
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
