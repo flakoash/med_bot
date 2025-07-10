@@ -46,11 +46,29 @@ dataset = load_dataset("json", data_files={
         "validation": os.path.join(DATA_PATH,"val.jsonl"),
     })
 
+def format_prompts(example):
+    msgs = [
+        {"role": "system",    "content": "You are a helpful medical assistant."},
+        {"role": "user",      "content": example["instruction"]},
+        {"role": "assistant", "content": example["output"]},
+    ]
+    return tokenizer.apply_chat_template(
+        msgs,
+        tokenize=False,
+        add_generation_prompt=False
+    )
+
+dataset_train = dataset.map(lambda x: {"text": format_prompts(x)}, remove_columns=dataset["train"].column_names)
+dataset_train = dataset_train.map(
+    lambda x: tokenizer(x["text"]), num_proc=4,
+    remove_columns=["text"],
+)
+
 trainer = SFTTrainer(
     model = model,
     tokenizer = tokenizer,
-    train_dataset = dataset["train"],
-    eval_dataset = dataset["validation"],
+    train_dataset = dataset_train["train"],
+    # eval_dataset = dataset["validation"],
     dataset_text_field = "text",
     max_seq_length = max_seq_length,
     packing = False, # Can make training 5x faster for short sequences.
@@ -70,3 +88,7 @@ trainer = SFTTrainer(
 )    
 
 trainer_stats = trainer.train()
+
+model.merge_adapter()
+model.save_pretrained(OUTPUT_DIR)
+tokenizer.save_pretrained(OUTPUT_DIR)
