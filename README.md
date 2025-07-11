@@ -46,6 +46,12 @@ We used the unsloth documentation for reference on training models on limited re
 - model quantization 4-bit
 - we used a 8-bit version of AdamW Optimizer
 
+Finally, to simplify model deplyment, we uploaded the trained models to he HugingFace Hub and can be accessed here:
+- https://huggingface.co/flakoash/medqa_lora_phi
+- https://huggingface.co/flakoash/medqa_lora_meta
+
+Note: this models require bitsandbites in order to be used (due to the quantization)
+
 ### Validation
 for Validation we used the validation set (20% form total records) to compare the model performance, in total we compared 4 models:
 - Llama base
