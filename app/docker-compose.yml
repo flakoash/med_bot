@@ -16,7 +16,7 @@ services:
     volumes:
       - ~/.cache/huggingface:/root/.cache/huggingface
     command: >
-      --model mistralai/Mistral-7B-Instruct-v0.2
+      --model flakoash/medqa_lora_phi
       --trust-remote-code
       --gpu-memory-utilization 0.9
       --max-model-len 8192
