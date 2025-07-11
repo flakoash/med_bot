@@ -1,0 +1,9 @@
+services:
+  chainlit:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./medquad_faiss:/app/medquad_faiss

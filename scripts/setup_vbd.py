@@ -1,14 +1,14 @@
 import argparse
 
 from datasets import load_dataset
-from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from loguru import logger
 
 # default values
 EMB_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-OUTPUT_DIR = "medquad_faiss"
+OUTPUT_DIR = "app/medquad_faiss"
 NUM_EXAMPLES = 5000
 
 

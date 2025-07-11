@@ -6,10 +6,10 @@ from typing import Sequence
 import chainlit as cl
 from dotenv import load_dotenv
 from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.memory import ChatMessageHistory
 from langchain.schema import Document
 from langchain.vectorstores.faiss import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import (ChatPromptTemplate, MessagesPlaceholder,
                                     SystemMessagePromptTemplate)
 from langchain_core.runnables import (RunnableLambda, RunnableParallel,
@@ -56,7 +56,7 @@ llm = ChatOpenAI(
 # load local embedder, as an improvement we can have a separate vllm serving this in next iterations
 embedder = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 # load local vector DB, again, as an improvement we can use a proper vector DB in next iterations
-vectorstore = FAISS.load_local("../medquad_faiss", embedder, allow_dangerous_deserialization=True)
+vectorstore = FAISS.load_local("./medquad_faiss", embedder, allow_dangerous_deserialization=True)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 prompt = ChatPromptTemplate.from_messages(
