@@ -216,3 +216,7 @@ notebooks/unsloth_compiled_cache/*
 unsloth_compiled_cache/*
 runs/*
 outputs/*
+app/.chainlit/*
+.DS_Store
+medquad_faiss/index.faiss
+medquad_faiss/index.pkl
