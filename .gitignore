@@ -220,3 +220,5 @@ app/.chainlit/*
 .DS_Store
 medquad_faiss/index.faiss
 medquad_faiss/index.pkl
+app/medquad_faiss/index.faiss
+app/medquad_faiss/index.pkl

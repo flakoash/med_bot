@@ -7,3 +7,23 @@ services:
       - .env
     volumes:
       - ./medquad_faiss:/app/medquad_faiss
+  llm:
+    image: vllm/vllm-openai:v0.8.4
+    runtime: nvidia
+    ipc: host
+    ports:
+      - "8001:8000"
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    command: >
+      --model mistralai/Mistral-7B-Instruct-v0.2
+      --trust-remote-code
+      --gpu-memory-utilization 0.9
+      --max-model-len 8192
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
