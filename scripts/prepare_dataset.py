@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import re
@@ -9,6 +10,12 @@ import spacy
 from loguru import logger
 from sklearn.model_selection import train_test_split
 from spacy.cli import download
+
+# default values
+INPUT_DATA = "data/raw/intern_screening_dataset.csv"
+OUTPUT_DIR = "data/cleaned/"
+NUM_EXAMPLES = 1000
+MAX_ANSWER_LEN = 250
 
 
 def is_valid_question(text: str) -> bool:
@@ -43,14 +50,14 @@ def filter_valid_data(df: pd.DataFrame, limit: Optional[int] = None, max_answer_
 
     Args:
         df (pd.DataFrame): original DF
-        limit (Optional[int]): if specified the filtered DF will be truncated to the <limit> rows 
+        limit (Optional[int]): if specified the filtered DF will be truncated to the <limit> rows
         max_answer_len (int): default 250 words (75% of answers have less than 250 words based on out EDA)
 
     Returns:
         pd.DataFrame: filtered DF
     """
 
-    filtered_df = df[~df['answer'].isnull()].head(limit*3).copy() # just a sanity copy jic we need the df somewhere else
+    filtered_df = df[~df['answer'].isnull()].head(limit * 3).copy() # just a sanity copy jic we need the df
     filtered_df['answer_words'] = filtered_df['answer'].str.split().apply(len)
     filtered_df['valid_question'] = filtered_df['question'].apply(is_valid_question)
     # some answers are long using spacy on all will be expensive, better a simple check here
@@ -59,52 +66,62 @@ def filter_valid_data(df: pd.DataFrame, limit: Optional[int] = None, max_answer_
     filtered_df = filtered_df[
         (filtered_df["answer_words"] < max_answer_len)
         & (filtered_df["valid_question"])
-        & (filtered_df["valid_answer"]) ]
-    
+        & (filtered_df["valid_answer"])]
+
     if limit:
         # if we specify a limit get a sample subset of the filtered DF
         return filtered_df.sample(limit)
     return filtered_df
+
 
 def clean_text(txt: str) -> str:
     txt = unicodedata.normalize("NFKC", txt)
     txt = re.sub(r"\s+", " ", txt).strip()
     return txt
 
+
 def format_df(df: pd.DataFrame) -> list:
     pairs = [
         {
-        "instruction": clean_text(q),
-        "input": "",
-        "output":   clean_text(a)
-        } for q,a in zip(df.question, df.answer)
+            "instruction": clean_text(q),
+            "input": "",
+            "output": clean_text(a)
+        } for q, a in zip(df.question, df.answer)
         if 5 <= len(clean_text(q).split()) <= 512
     ]
     return pairs
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="prepare dataset to finetune llm")
+    parser.add_argument("--input_data", type=str, default=INPUT_DATA)
+    parser.add_argument("--output_dir", type=str, default=OUTPUT_DIR)
+    parser.add_argument("--num_examples", type=int, default=NUM_EXAMPLES)
+    parser.add_argument("--max_answer_len", type=int, default=MAX_ANSWER_LEN)
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_args()
     # ensure the spacy model is downloaded
     try:
         nlp = spacy.load("en_core_web_sm")
     except OSError:
         download("en_core_web_sm")
         nlp = spacy.load("en_core_web_sm")
-    
-    # ideally in the future we wont hardcode the csv path, we could add a script param
-    main_dataset_path = "data/raw/intern_screening_dataset.csv"
-    
+
     logger.info("Filtering base dataset")
     df = filter_valid_data(
-        df = pd.read_csv(main_dataset_path),
-        limit = 1000,
-        max_answer_len=250
+        df = pd.read_csv(args.input_data),
+        limit = args.num_examples,
+        max_answer_len = args.max_answer_len
         )
-    
+
     # split train test sets:
     logger.info("Splitting filtered dataset into train, test sets")
     train_df, val_df = train_test_split(
-        df, 
+        df,
         test_size=0.2,
         random_state=111,
     )
@@ -113,24 +130,21 @@ if __name__ == "__main__":
 
     # write DFs to disk
     logger.info("Persisting train, test sets")
-    # create directory if not exists
-    os.makedirs("data/cleaned/", exist_ok=True)
+    # create directory if doesnt exists
+    os.makedirs(args.output_dir, exist_ok=True)
 
     # format data
     train_pairs = format_df(train_df)
-    with open(f"data/cleaned/train.jsonl","w") as f:
+    with open(f"{args.output_dir}/train.jsonl", "w") as f:
         for row in train_pairs:
             json.dump(row, f)
             f.write("\n")
 
     val_pairs = format_df(val_df)
-    with open(f"data/cleaned/val.jsonl","w") as f:
+    with open(f"{args.output_dir}/val.jsonl", "w") as f:
         for row in val_pairs:
             json.dump(row, f)
             f.write("\n")
 
-    train_df.to_parquet("data/cleaned/train_dataset.parquet")
-    val_df.to_parquet("data/cleaned/validation_dataset.parquet")
-    
-    
-    
+    train_df.to_parquet(f"{args.output_dir}/train_dataset.parquet")
+    val_df.to_parquet(f"{args.output_dir}/validation_dataset.parquet")
